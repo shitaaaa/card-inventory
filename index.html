@@ -874,7 +874,7 @@ function copyGistId() {
   navigator.clipboard.writeText(GIST_ID).then(() => alert('Gist ID 已複製！')).catch(() => prompt('請手動複製：', GIST_ID));
 }
 
-as ync function saveSettings() {
+async function saveSettings() {
   const newPat = document.getElementById('settings-pat').value.trim();
   const newGist = document.getElementById('settings-gist-switch').value.trim();
   if (newPat) PAT= newPat;
