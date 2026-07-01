@@ -1,1 +1,912 @@
-index.html
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🃏 球員卡庫存系統</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root { color-scheme: light; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f5f7;color:#1a1a2e;min-height:100vh;}
+
+/* Setup Screen */
+#setup-screen{position:fixed;inset:0;background:#1a1a2e;z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.setup-box{background:white;border-radius:16px;padding:36px;width:100%;max-width:460px;}
+.setup-logo{font-size:48px;text-align:center;margin-bottom:8px;}
+.setup-title{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px;}
+.setup-sub{font-size:13px;color:#888;text-align:center;margin-bottom:28px;}
+.setup-step{background:#f8f9ff;border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:13px;line-height:1.7;color:#444;}
+.setup-step a{color:#3b5bdb;text-decoration:none;}
+.setup-step a:hover{text-decoration:underline;}
+.setup-step strong{color:#1a1a2e;}
+.setup-label{font-size:12px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;margin-top:16px;display:block;}
+.setup-input{width:100%;padding:11px 14px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:14px;outline:none;font-family:monospace;}
+.setup-input:focus{border-color:#3b5bdb;}
+.setup-hint{font-size:12px;color:#aaa;margin-top:5px;}
+.btn-connect{width:100%;padding:13px;background:#3b5bdb;color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:20px;transition:background .2s;}
+.btn-connect:hover{background:#2f4ac0;}
+.btn-connect:disabled{background:#bbb;cursor:not-allowed;}
+.setup-error{background:#fce4e4;color:#721c24;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px;display:none;}
+
+/* Header */
+.header{background:#1a1a2e;color:white;padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;}
+.header-icon{font-size:22px;}
+.header h1{font-size:17px;font-weight:700;flex:1;}
+.sync-status{display:flex;align-items:center;gap:6px;font-size:12px;padding:5px 10px;border-radius:20px;cursor:pointer;transition:background .2s;}
+.sync-status:hover{background:rgba(255,255,255,.1);}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sync-dot.synced{background:#51cf66;}
+.sync-dot.syncing{background:#ffd43b;animation:pulse 1s infinite;}
+.sync-dot.error{background:#ff6b6b;}
+.sync-dot.offline{background:#868e96;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.header-settings{background:none;border:none;color:rgba(255,255,255,.6);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.header-settings:hover{color:white;background:rgba(255,255,255,.1);}
+
+/* Nav */
+.nav{background:white;border-bottom:1px solid #e0e4ea;display:flex;padding:0 20px;position:sticky;top:53px;z-index:40;}
+.nav-btn{padding:13px 18px;font-size:14px;font-weight:500;border:none;background:none;cursor:pointer;color:#666;border-bottom:3px solid transparent;transition:all .2s;}
+.nav-btn:hover{color:#1a1a2e;}
+.nav-btn.active{color:#3b5bdb;border-bottom-color:#3b5bdb;}
+
+/* Content */
+.content{padding:20px;max-width:960px;margin:0 auto;}
+.tab-section{display:none;}
+.tab-section.active{display:block;}
+
+/* Card */
+.card{background:white;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:16px;}
+.card-title{font-size:15px;font-weight:600;margin-bottom:16px;color:#1a1a2e;display:flex;align-items:center;gap:8px;}
+
+/* Mode toggle */
+.mode-toggle{display:flex;background:#f4f5f7;border-radius:8px;padding:4px;margin-bottom:20px;}
+.mode-btn{flex:1;padding:8px;border:none;background:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:#666;transition:all .2s;}
+.mode-btn.active{background:white;color:#3b5bdb;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+
+/* Upload */
+.upload-zone{border:2px dashed #c8d0e7;border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:#f8f9ff;margin-bottom:16px;}
+.upload-zone:hover,.upload-zone.drag-over{border-color:#3b5bdb;background:#eef1ff;}
+.upload-zone .uicon{font-size:36px;margin-bottom:8px;}
+.upload-zone p{color:#666;font-size:14px;}
+.upload-zone .hint{font-size:12px;color:#999;margin-top:4px;}
+#upload-input{display:none;}
+.preview-wrap{position:relative;display:inline-block;margin-bottom:16px;}
+.preview-img{max-width:180px;max-height:180px;border-radius:8px;display:block;border:1px solid #e0e4ea;}
+.preview-remove{position:absolute;top:-8px;right:-8px;background:#ff4757;color:white;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:13px;line-height:22px;text-align:center;}
+
+/* AI status */
+.ai-status{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.ai-status.loading{background:#fff3cd;color:#856404;}
+.ai-status.success{background:#d1f7e4;color:#0f5132;}
+.ai-status.error{background:#fce4e4;color:#721c24;}
+.ai-status.hidden{display:none;}
+.spinner{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Form */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group label{font-size:12px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.5px;}
+.form-group input,.form-group select{padding:10px 12px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:14px;outline:none;transition:border-color .2s;background:white;}
+.form-group input:focus,.form-group select:focus{border-color:#3b5bdb;}
+
+/* Buttons */
+.btn{padding:10px 20px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-primary{background:#3b5bdb;color:white;}
+.btn-primary:hover{background:#2f4ac0;}
+.btn-secondary{background:#f4f5f7;color:#444;}
+.btn-secondary:hover{background:#e8eaed;}
+.btn-ai{background:#7048e8;color:white;display:flex;align-items:center;gap:6px;}
+.btn-ai:hover{background:#5f3dc4;}
+.btn-ai:disabled{background:#bbb;cursor:not-allowed;}
+.btn-group{display:flex;gap:10px;margin-top:16px;}
+.btn-sell{background:#2f9e44;color:white;font-size:12px;padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-weight:600;}
+.btn-sell:hover{background:#238636;}
+.btn-danger{background:#ff6b6b;color:white;font-size:12px;padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-weight:600;}
+.btn-danger:hover{background:#fa5252;}
+
+/* Inventory */
+.filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.search-input{flex:1;min-width:200px;padding:10px 14px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:14px;outline:none;}
+.search-input:focus{border-color:#3b5bdb;}
+.filter-select{padding:10px 14px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:14px;outline:none;background:white;}
+.inventory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:14px;}
+.inv-card{background:white;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden;transition:transform .2s,box-shadow .2s;}
+.inv-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12);}
+.inv-card-img{width:100%;height:135px;background:#f0f2ff;display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;}
+.inv-card-img img{width:100%;height:100%;object-fit:contain;}
+.inv-card-body{padding:12px;}
+.inv-card-name{font-size:14px;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.inv-card-num{font-size:12px;color:#888;margin-bottom:6px;}
+.inv-card-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.inv-card-cat{background:#eef1ff;color:#3b5bdb;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.inv-card-qty{font-size:13px;font-weight:700;}
+.inv-card-qty.low{color:#e03131;}
+.inv-card-actions{display:flex;gap:6px;}
+.inv-card-actions button{flex:1;}
+.empty-state{text-align:center;padding:60px 20px;color:#aaa;grid-column:1/-1;}
+.empty-state .empty-icon{font-size:48px;margin-bottom:12px;}
+.empty-state p{font-size:15px;}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.stat-card{background:white;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08);text-align:center;}
+.stat-label{font-size:12px;color:#888;font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.stat-value{font-size:26px;font-weight:700;}
+.stat-value.green{color:#2f9e44;}
+.stat-value.blue{color:#3b5bdb;}
+.stat-value.orange{color:#e67700;}
+.chart-wrap{height:220px;position:relative;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:10px 12px;border-bottom:2px solid #e0e4ea;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#888;}
+td{padding:10px 12px;border-bottom:1px solid #f0f2f5;}
+tr:last-child td{border-bottom:none;}
+
+/* Sell Modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-backdrop.hidden{display:none;}
+.modal{background:white;border-radius:14px;padding:24px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:4px;}
+.modal .modal-sub{font-size:13px;color:#888;margin-bottom:20px;}
+.modal .form-group{margin-bottom:14px;}
+.modal-actions{display:flex;gap:10px;margin-top:20px;}
+.modal-actions button{flex:1;padding:12px;}
+.sell-total{background:#f8f9ff;border-radius:8px;padding:12px;font-size:14px;text-align:center;margin-top:12px;}
+.sell-total span{font-weight:700;font-size:18px;color:#2f9e44;}
+
+/* Settings drawer */
+#settings-drawer{position:fixed;inset:0;z-index:150;display:none;}
+#settings-drawer.open{display:flex;}
+.settings-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);}
+.settings-panel{position:absolute;right:0;top:0;bottom:0;width:340px;background:white;padding:24px;overflow-y:auto;box-shadow:-4px 0 20px rgba(0,0,0,.15);}
+.settings-panel h2{font-size:16px;font-weight:700;margin-bottom:4px;}
+.settings-panel .settings-sub{font-size:13px;color:#888;margin-bottom:24px;}
+.settings-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:#888;margin-top:-4px;}
+.gist-id-display{background:#f4f5f7;border-radius:8px;padding:10px 12px;font-size:12px;font-family:monospace;word-break:break-all;color:#444;margin-bottom:12px;}
+.danger-zone{border:1px solid #ffc9c9;border-radius:10px;padding:16px;margin-top:24px;}
+.danger-zone h3{color:#c92a2a;font-size:13px;font-weight:700;margin-bottom:12px;}
+
+@media(max-width:600px){
+  .form-row{grid-template-columns:1fr;}
+  .stats-grid{grid-template-columns:1fr;}
+  .inventory-grid{grid-template-columns:repeat(2,1fr);}
+  .settings-panel{width:100%;}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Setup Screen ===== -->
+<div id="setup-screen">
+  <div class="setup-box">
+    <div class="setup-logo">🃏</div>
+    <div class="setup-title">球員卡庫存系統</div>
+    <div class="setup-sub">連接 GitHub Gist，跨瀏覽器同步資料</div>
+
+    <div class="setup-step">
+      <strong>步驟 1：</strong>前往 <a href="https://github.com/settings/tokens/new?description=%E7%90%83%E5%93%A1%E5%8D%A1%E5%BA%AB%E5%AD%98&scopes=gist" target="_blank">GitHub → Settings → Tokens → New token</a>，勾選 <strong>gist</strong> 權限後產生 Token。
+    </div>
+    <div class="setup-step">
+      <strong>步驟 2：</strong>貼上 Token，第一次連線系統會自動建立 Gist；若你已有舊 Gist，貼上 Gist ID 就能接回資料。
+    </div>
+
+    <label class="setup-label">GitHub Personal Access Token</label>
+    <input class="setup-input" type="password" id="setup-pat" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+
+    <label class="setup-label">Gist ID（第一次留空自動建立）</label>
+    <input class="setup-input" type="text" id="setup-gist-id" placeholder="留空自動建立新 Gist" autocomplete="off">
+    <div class="setup-hint">之後可在設定裡查看 Gist ID</div>
+
+    <div id="setup-error" class="setup-error"></div>
+    <button class="btn-connect" id="connect-btn" onclick="connectGitHub()">連接 GitHub</button>
+  </div>
+</div>
+
+<!-- ===== Main App ===== -->
+<div id="app" style="display:none">
+
+  <div class="header">
+    <div class="header-icon">🃏</div>
+    <h1>球員卡庫存系統</h1>
+    <div class="sync-status" id="sync-status" onclick="manualSync()" title="點擊手動同步">
+      <div class="sync-dot synced" id="sync-dot"></div>
+      <span id="sync-text">已同步</span>
+    </div>
+    <button class="header-settings" onclick="openSettings()" title="設定">⚙️</button>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="switchTab('add',this)">＋ 新增卡片</button>
+    <button class="nav-btn" onclick="switchTab('inventory',this)">📦 庫存列表</button>
+    <button class="nav-btn" onclick="switchTab('stats',this)">📊 銷售統計</button>
+  </nav>
+
+  <div class="content">
+
+    <!-- 新增卡片 -->
+    <div id="tab-add" class="tab-section active">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mode-ai-btn" onclick="switchMode('ai')">🤖 圖片辨識</button>
+        <button class="mode-btn" id="mode-manual-btn" onclick="switchMode('manual')">✍️ 手動輸入</button>
+      </div>
+
+      <!-- AI 模式 -->
+      <div id="ai-mode">
+        <div class="card">
+          <div class="card-title">📷 $��傳球員卡圖片</div>
+          <div id="upload-zone" class="upload-zone" onclick="document.getElementById('upload-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+            <div class="uicon">📸</div>
+            <p>點擊或拖曳圖片至此</p>
+            <div class="hint">支援 JPG、PNG、WEBP</div>
+          </div>
+          <input type="file" id="upload-input" accept="image/*" onchange="handleFileSelect(event)">
+          <div id="preview-container" style="display:none;margin-bottom:16px;">
+            <div class="preview-wrap">
+              <img id="preview-img" class="preview-img" src="" alt="預覽">
+              <button class="preview-remove" onclick="removeImage()">✕</button>
+            </div>
+          </div>
+          <div id="ai-status" class="ai-status hidden"></div>
+          <button class="btn btn-ai" id="ai-btn" onclick="runAI()" disabled>
+            <span>✨</span> AI 辨識球員資訊
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📝 確認 / 編輯資訊</div>
+          <div class="form-row">
+            <div class="form-group"><label>球員號碼</label><input type="text" id="ai-number" placeholder="例：23"></div>
+            <div class="form-group"><label>球員姓名</label><input type="text" id="ai-name" placeholder="例：Michael Jordan"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>分類</label><input type="text" id="ai-category" list="cat-list" placeholder="例：NBA、MLB"></div>
+            <div class="form-group"><label>數量</label><input type="number" id="ai-qty" value="1" min="1"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>備註（選填）</label>
+            <input type="text" id="ai-note" placeholder="例：Rookie Card、特別版...">
+          </div>
+          <datalist id="cat-list"></datalist>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="addCard('ai')">➕ 加入庫存</button>
+            <button class="btn btn-secondary" onclick="clearForm('ai')">清除</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 手動模式 -->
+      <div id="manual-mode" style="display:none">
+        <div class="card">
+          <div class="card-title">✍️ 手動輸入卡片資訊</div>
+          <div class="form-row">
+            <div class="form-group"><label>球員號碼</label><input type="text" id="m-number" placeholder="例：23"></div>
+            <div class="form-group"><label>球員姓名</label><input type="text" id="m-name" placeholder="例：Michael Jordan"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>分類</label><input type="text" id="m-category" list="cat-list-m" placeholder="例：NBA、MLB"></div>
+            <div class="form-group"><label>數量</label><input type="number" id="m-qty" value="1" min="1"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>備註（選填）</label>
+            <input type="text" id="m-note" placeholder="例：Rookie Card、特別版...">
+          </div>
+          <datalist id="cat-list-m"></datalist>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="addCard('manual')">➕ 加入庫存</button>
+            <button class="btn btn-secondary" onclick="clearForm('manual')">清除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 庫存列表 -->
+    <div id="tab-inventory" class="tab-section">
+      <div class="filters">
+        <input class="search-input" type="text" id="search-input" placeholder="🔍 搜尋球員名稱或號碼..." oninput="renderInventory()">
+        <select class="filter-select" id="cat-filter" onchange="renderInventory()">
+          <option value="">所有分類</option>
+        </select>
+      </div>
+      <div id="inventory-grid" class="inventory-grid"></div>
+    </div>
+
+    <!-- 銷售統計 -->
+    <div id="tab-stats" class="tab-section">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">總銷售額</div>
+          <div class="stat-value green" id="stat-revenue">$0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">已售出件數</div>
+          <div class="stat-value blue" id="stat-sold">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">庫存總量</div>
+          <div class="stat-value orange" id="stat-stock">0</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📈 月銷售額趨勢</div>
+        <div class="chart-wrap"><canvas id="sales-chart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 銷售紀錄</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>日期</th><th>球員</th><th>號碼</th><th>分類</th><th>數量</th><th>售出金額</th></tr></thead>
+            <tbody id="sales-table"></tbody>
+          </table>
+          <div id="no-sales" class="empty-state" style="display:none">
+            <div class="empty-icon">💰</div><p>尚無銷售紀錄</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Sell Modal -->
+<div id="sell-modal" class="modal-backdrop hidden">
+  <div class="modal">
+    <h2>💸 標記售出</h2>
+    <div class="modal-sub" id="sell-modal-sub"></div>
+    <div class="form-group"><label>售出數量</label><input type="number" id="sell-qty" value="1" min="1" oninput="updateSellTotal()"></div>
+    <div class="form-group"><label>每張售出金額（元）</label><input type="number" id="sell-price" placeholder="例：500" min="0" oninput="updateSellTotal()"></div>
+    <div class="sell-total">總金額：<span id="sell-total-display">—</span></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeSellModal()">取消</button>
+      <button class="btn btn-sell" style="flex:1;padding:12px;font-size:14px;border-radius:8px;" onclick="confirmSell()">✓ 確認售出</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Drawer -->
+<div id="settings-drawer">
+  <div class="settings-backdrop" onclick="closeSettings()"></div>
+  <div class="settings-panel">
+    <button class="settings-close" onclick="closeSettings()">✕</button>
+    <h2>⚙️ 設定</h2>
+    <div class="settings-sub">GitHub Gist 連線資訊</div>
+
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Gist ID（其他瀏覽器連線時貼上）</label>
+      <div class="gist-id-display" id="settings-gist-id">—</div>
+      <button class="btn btn-secondary" style="font-size:12px;padding:6px 14px" onclick="copyGistId()">複製 Gist ID</button>
+    </div>
+
+    <div class="form-group" style="margin-bottom:14px">
+      <label>更新 GitHub Token</label>
+      <input type="password" id="settings-pat" class="form-group input" style="padding:10px 12px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:14px;outline:none;width:100%;font-family:monospace" placeholder="貼上新 Token">
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>切換 Gist ID（接回舊資料）</label>
+      <input type="text" id="settings-gist-switch" style="padding:10px 12px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:14px;outline:none;width:100%" placeholder="貼上 Gist ID">
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:12px" onclick="saveSettings()">儲存設定並重新連線</button>
+
+    <div class="danger-zone" style="margin-top:24px">
+      <h3>⚠️ 危險操作</h3>
+      <button class="btn btn-danger" style="width:100%;padding:10px;font-size:14px" onclick="disconnect()">中斷連線並清除本機設定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ GitHub Gist Config ============
+const GIST_FILENAME = 'card-inventory-data.json';
+let PAT = '';
+let GIST_ID = '';
+let inventory = [];
+let sales = [];
+let sellTarget = null;
+let salesChart = null;
+let syncTimer = null;
+let pendingSync = false;
+
+// ============ Setup / Connect ============
+async function connectGitHub() {
+  const pat = document.getElementById('setup-pat').value.trim();
+  const gistId = document.getElementById('setup-gist-id').value.trim();
+  const btn = document.getElementById('connect-btn');
+  const errEl = document.getElementById('setup-error');
+
+  if (!pat) { showSetupError('請輸入 GitHub Token'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '連線中...';
+  errEl.style.display = 'none';
+
+  try {
+    // Verify token
+    const userRes = await ghFetch('https://api.github.com/user', pat);
+    if (!userRes.ok) { showSetupError('Token 無效，請確認並重試'); return; }
+
+    if (gistId) {
+      // Try to load existing gist
+      const gistRes = await ghFetch(`https://api.github.com/gists/${gistId}`, pat);
+      if (!gistRes.ok) { showSetupError('找不到指定的 Gist，請確認 Gist ID'); return; }
+      const gist = await gistRes.json();
+      const file = gist.files[GIST_FILENAME];
+      if (file) {
+        const data = JSON.parse(file.content);
+        inventory = data.inventory || [];
+        sales = data.sales || [];
+      }
+      GIST_ID = gistId;
+    } else {
+      // Create new gist
+      const createRes = await ghFetch('https://api.github.com/gists', pat, 'POST', {
+        description: '球員卡庫存系統資料',
+        public: false,
+        files: { [GIST_FILENAME]: { content: JSON.stringify({ inventory: [], sales: [] }, null, 2) } }
+      });
+      if (!createRes.ok) { showSetupError('建立 Gist 失敗，請確認 Token 有 gist 權限'); return; }
+      const newGist = await createRes.json();
+      GIST_ID = newGist.id;
+    }
+
+    PAT = pat;
+    localStorage.setItem('gh_pat', PAT);
+    localStorage.setItem('gh_gist_id', GIST_ID);
+    launchApp();
+  } catch (e) {
+    showSetupError('連線失敗：' + (e.message || '請確認網路連線'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '連接 GitHub';
+  }
+}
+
+function showSetupError(msg) {
+  const el = document.getElementById('setup-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function ghFetch(url, pat, method = 'GET', body = null) {
+  const opts = {
+    method,
+    headers: {
+      'Authorization': `token ${pat || PAT}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(url, opts);
+}
+
+function launchApp() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('settings-gist-id').textContent = GIST_ID;
+  updateCategoryLists();
+  setSyncStatus('synced', '已同步');
+}
+
+// ============ Auto-load on page open ============
+window.addEventListener('DOMContentLoaded', async () => {
+  const pat = localStorage.getItem('gh_pat');
+  const gistId = localStorage.getItem('gh_gist_id');
+  if (pat && gistId) {
+    PAT = pat;
+    GIST_ID = gistId;
+    document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('settings-gist-id').textContent = GIST_ID;
+    setSyncStatus('syncing', '同步中...');
+    await pullFromGist();
+    updateCategoryLists();
+  }
+});
+
+// ============ Sync ============
+async function pushToGist() {
+  if (!PAT || !GIST_ID) return;
+  setSyncStatus('syncing', '同步中...');
+  try {
+    const res = await ghFetch(`https://api.github.com/gists/${GIST_ID}`, PAT, 'PATCH', {
+      files: { [GIST_FILENAME]: { content: JSON.stringify({ inventory, sales }, null, 2) } }
+    });
+    if (res.ok) setSyncStatus('synced', '已同步 ' + timeNow());
+    else setSyncStatus('error', '同步失敗');
+  } catch (e) {
+    setSyncStatus('error', '網路錯誤');
+  }
+}
+
+async function pullFromGist() {
+  if (!PAT || !GIST_ID) return;
+  setSyncStatus('syncing', '載入中...');
+  try {
+    const res = await ghFetch(`https://api.github.com/gists/${GIST_ID}`);
+    if (res.ok) {
+      const gist = await res.json();
+      const file = gist.files[GIST_FILENAME];
+      if (file) {
+        const data = JSON.parse(file.content);
+        inventory = data.inventory || [];
+        sales = data.sales || [];
+      }
+      setSyncStatus('synced', '已同步 ' + timeNow());
+    } else {
+      setSyncStatus('error', '載入失敗');
+    }
+  } catch (e) {
+    setSyncStatus('error', '網路錯誤');
+  }
+}
+
+function scheduleSync() {
+  if (syncTimer) clearTimeout(syncTimer);
+  setSyncStatus('syncing', '等待同步...');
+  syncTimer = setTimeout(pushToGist, 1500);
+}
+
+async function manualSync() {
+  await pushToGist();
+}
+
+function setSyncStatus(type, text) {
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-text');
+  dot.className = 'sync-dot ' + type;
+  txt.textContent = text;
+}
+
+function timeNow() {
+  const d = new Date();
+  return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+}
+
+// ============ Tab ============
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-section').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (tab === 'inventory') renderInventory();
+  if (tab === 'stats') renderStats();
+}
+
+// ============ Mode ============
+function switchMode(mode) {
+  document.getElementById('ai-mode').style.display = mode === 'ai' ? 'block' : 'none';
+  document.getElementById('manual-mode').style.display = mode === 'manual' ? 'block' : 'none';
+  document.getElementById('mode-ai-btn').classList.toggle('active', mode === 'ai');
+  document.getElementById('mode-manual-btn').classList.toggle('active', mode === 'manual');
+}
+
+// ============ Image ============
+function handleDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function handleDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function handleDrop(e) {
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) loadImageFile(file);
+}
+function handleFileSelect(e) { const f = e.target.files[0]; if (f) loadImageFile(f); }
+
+let currentImage = null;
+function loadImageFile(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    // Compress image using canvas
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 500;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      currentImage = canvas.toDataURL('image/jpeg', 0.75);
+      document.getElementById('upload-zone').style.display = 'none';
+      document.getElementById('preview-container').style.display = 'block';
+      document.getElementById('preview-img').src = currentImage;
+      document.getElementById('ai-btn').disabled = false;
+      setAIStatus('hidden', '');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeImage() {
+  currentImage = null;
+  document.getElementById('upload-zone').style.display = '';
+  document.getElementById('preview-container').style.display = 'none';
+  document.getElementById('upload-input').value = '';
+  document.getElementById('ai-btn').disabled = true;
+  setAIStatus('hidden', '');
+}
+
+// ============ AI ============
+function setAIStatus(type, msg) {
+  const el = document.getElementById('ai-status');
+  el.className = 'ai-status ' + type;
+  if (type === 'loading') el.innerHTML = `<div class="spinner"></div>${msg}`;
+  else el.textContent = msg;
+}
+
+async function runAI() {
+  if (!currentImage || typeof window.cowork === 'undefined') {
+    setAIStatus('error', '⚠ AI 辨識功能需在 Cowork 環境使用，請手動輸入');
+    return;
+  }
+  const btn = document.getElementById('ai-btn');
+  btn.disabled = true;
+  setAIStatus('loading', 'AI 辨識中，請稍候...');
+  try {
+    const prompt = `你是球員卡辨識專家。請分析這張球員卡圖片，找出：
+1. 球員號碼（jersey number）
+2. 球員姓名（完整姓名）
+
+只回傳 JSON，不加任何說明：
+{"playerNumber": "號碼或null", "playerName": "姓名或null"}`;
+
+    const result = await window.cowork.askClaude(prompt, [currentImage]);
+    const text = typeof result === 'string' ? result : (result?.text || result?.content || JSON.stringify(result));
+    const jsonMatch = text.match(/\{[^}]+\}/);
+    let parsed = null;
+    if (jsonMatch) { try { parsed = JSON.parse(jsonMatch[0]); } catch(e) {} }
+
+    if (parsed) {
+      if (parsed.playerNumber && parsed.playerNumber !== 'null') document.getElementById('ai-number').value = parsed.playerNumber;
+      if (parsed.playerName && parsed.playerName !== 'null') document.getElementById('ai-name').value = parsed.playerName;
+      const ok = [parsed.playerNumber, parsed.playerName].filter(v => v && v !== 'null');
+      setAIStatus(ok.length > 0 ? 'success' : 'error', ok.length > 0 ? `✓ 辨識：${ok.join('、')}，請確認資訊` : '⚠ 無法辨識，請手動輸入');
+    } else {
+      setAIStatus('error', '⚠ 辨識失敗，請手動輸入');
+    }
+  } catch (e) {
+    setAIStatus('error', '⚠ AI 辨識錯誤，請手動輸入');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ============ Add Card ============
+function addCard(mode) {
+  const p = mode === 'ai' ? 'ai' : 'm';
+  const number = document.getElementById(`${p}-number`).value.trim();
+  const name = document.getElementById(`${p}-name`).value.trim();
+  const category = document.getElementById(`${p}-category`).value.trim() || '未分類';
+  const qty = parseInt(document.getElementById(`${p}-qty`).value) || 1;
+  const note = document.getElementById(`${p}-note`).value.trim();
+
+  if (!name && !number) { alert('請至少輸入球員名稱或號碼！'); return; }
+  if (qty < 1) { alert('數量至少為 1！'); return; }
+
+  const existing = inventory.find(c => c.number === number && c.name === name && c.category === category);
+  if (existing) {
+    if (confirm(`已有「${name || number}」，是否加 ${qty} 張到現有庫存？`)) {
+      existing.qty += qty;
+      scheduleSync();
+      alert(`已增加至 ${existing.qty} 張`);
+    }
+    return;
+  }
+
+  inventory.push({
+    id: Date.now().toString() + Math.random().toString(36).slice(2,6),
+    number, name, category, qty, note,
+    image: mode === 'ai' ? currentImage : null,
+    addedAt: new Date().toISOString()
+  });
+
+  scheduleSync();
+  updateCategoryLists();
+  clearForm(mode);
+  if (mode === 'ai') removeImage();
+  alert(`✓ 已新增「${name || number}~」× ${qty} 弭！`);
+}
+
+function clearForm(mode) {
+  const p = mode === 'ai' ? 'ai' : 'm';
+  ['number','name','category',"note'].forEach(f => { document.getElementById(`${p}-${f}`).value = ''; });
+  document.getElementById(`${p}-qty`).value = 1;
+  if (mode === 'ai') setAIStatus('hidden', '');
+}
+
+// ============ Inventory ============
+function renderInventory() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const catFilter = document.getElementById('cat-filter').value;
+  updateCategoryLists();
+
+  let filtered = inventory.filter(c => {
+    const ms = !search || (c.name||'').toLowerCase().includes(search) || (c.number||'').toLowerCase().includes(search) || (c.note||'').toLowerCase().includes(search);
+    const mc = !catFilter || c.category === catFilter;
+    return ms && mc;
+  });
+
+  const grid = document.getElementById('inventory-grid');
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><p >${inventory.length === 0 ? '庫存污隔，快压新增球員卡！' : '沒有第合梞件的卡鉇'}</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(c => `
+    <div class="inv-card">
+      <div class=�[��X�\�Z[Yȏ��	�˚[XY�H�[Y�ܘ�H��˚[XY�_H�[H��˛�[Y_˛�[X�\�H���	��[��'�����[���B��]���]��\��H�[��X�\�X��H���]��\��H�[��X�\�[�[YH�]OH��˛�[Y_	��%	�H���˛�[Y_	��%	�O�]���]��\��H�[��X�\�[�[H����˛�[X�\�	��%	�I�˛��H�0��	�˛��_X�	��O�]���]��\��H�[��X�\�[Y]H����[��\��H�[��X�\�X�]�]OH��˘�]Y�ܞ_H���˘�]Y�ܞ_O��[����[��\��H�[��X�\�\]H	�˜]OLO����Ή��H�����˜]_O��[����]���]��\��H�[��X�\�XX�[ۜȏ���]ۈ�\��H���\�[�ۘ�X��H��[��[[�[
+	��˚YI�H��e+�a�؝]ۏ���]ۈ�\��H���Y[��\��ۘ�X��H�[]P�\�
+	��˚YI�H��b*�fi؝]ۏ���]����]����]��
+K���[�	��NB���[��[ۈ[]P�\�
+Y
+H�ۜ��H[��[�ܞK��[�
+O��YOOHY
+NY�
+X�H�]\��Y�
+�ۙ�\�J9论*�yb*�fi8�#	�˛�[Y_˛�[X�\�x�#ye��'�
+JH[��[�ܞHH[��[�ܞK��[\�O��YOOHY
+N��Y[T�[��
+N�[�\�[��[�ܞJ
+NB�B���[��[ۈ\]P�]Y�ܞS\��
+H�ۜ��]�Hˋ���]��]
+[��[�ܞK�X\
+�O�˘�]Y�ܞJK��[\����X[�JWN�ۜ��[\�H��[Y[���][[Y[��RY
+	��]Y�[\��NY�
+�[\�H�ۜ��\�H�[\���[YN�[\��[��\�SH	��[ۈ�[YOH����`9�"yb!�hg���[ۏ��
+��]˛X\
+�O��[ۈ�[YOH���H���OOX�\����[X�Y	Ή��O���O��[ۏ�
+K���[�	��NB����][\�	�	��][\�[I�K��ܑXX�
+YO��ۜ�H��[Y[���][[Y[��RY
+Y
+NY�
+
+H�[��\�SH�]˛X\
+�O��[ۈ�[YOH���H��
+K���[�	��NJNB����OOOOOOOOOOOH�[OOOOOOOOOOOB��[��[ۈ�[��[[�[
+Y
+H�ۜ��H[��[�ܞK��[�
+O��YOOHY
+NY�
+X�H�]\���[\��]H���[Y[���][[Y[��RY
+	��[[[�[\�X��K�^�۝[�H	�˛�[Y_	��%	�H��˛�[X�\�	��%	�H0��9n��kf	�˜]_H9o-X��[Y[���][[Y[��RY
+	��[\]I�K��[YHHN��[Y[���][[Y[��RY
+	��[\]I�K�X^H˜]N��[Y[���][[Y[��RY
+	��[\�X�I�K��[YHH	����[Y[���][[Y[��RY
+	��[]�[Y\�^I�K�^�۝[�H	��%	���[Y[���][[Y[��RY
+	��[[[�[	�K��\��\���[[ݙJ	�Y[��NB��[��[ۈ���T�[[�[
+
+H���[Y[���][[Y[��RY
+	��[[[�[	�K��\��\��Y
+	�Y[��N��[\��]H�[�B��[��[ۈ\]T�[�[
+
+H�ۜ�HH\��R[�
+��[Y[���][[Y[��RY
+	��[\]I�K��[YJ_�ۜ�H\��Q��]
+��[Y[���][[Y[��RY
+	��[\�X�I�K��[YJ_��[Y[���][[Y[��RY
+	��[]�[Y\�^I�K�^�۝[�HJ���		�J�
+K����[T��[��
+_X�	��%	�B��[��[ۈ�ۙ�\�T�[
+
+HY�
+\�[\��]
+H�]\���ۜ�]HH\��R[�
+��[Y[���][[Y[��RY
+	��[\]I�K��[YJN�ۜ��X�HH\��Q��]
+��[Y[���][[Y[��RY
+	��[\�X�I�K��[YJ_Y�
+\]H]HJH�[\�
+	�*��/.9aiye+�an:a��� I�N��]\���B�Y�
+]H��[\��]�]JH�[\�
+9n��kf9.#z-��� y� 9i&�	��[\��]�]_H9o-X
+N��]\���B���[\˜\�
+Y�]K����
+K����[��
+K��\�Y��[\��]�Y�\��[YN��[\��]��[YK�\��[X�\���[\��]��[X�\���]Y�ܞN��[\��]��]Y�ܞK]K�X�K�[�]H
+��X�K���]��]�]J
+K��T����[��
+B�JN��[\��]�]HOH]NY�
+�[\��]�]HOOH
+HY�
+�ۙ�\�J9n��kf9�n:f���#9�+�d)�o��b%�(j9���fi8�#	��[\��]��[Y_�[\��]��[X�\�x�#{�'�
+JH[��[�ܞHH[��[�ܞK��[\��O�˚YOOH�[\��]�Y
+NB�B���Y[T�[��
+N���T�[[�[
+
+N�[�\�[��[�ܞJ
+N[\�
+8�$�9e+�a�	�]_H9o-{�#:a�zhcH		�]J��X�JK����[T��[��
+_X
+NB����OOOOOOOOOOOH�]�OOOOOOOOOOOB��[��[ۈ�[�\��]�
+H�ۜ��[�]�H�[\˜�YX�J
+�
+HO�����[
+N�ۜ��[��H�[\˜�YX�J
+�
+HO����]K
+N�ۜ��[����H[��[�ܞK��YX�J
+��HO���˜]K
+N��[Y[���][[Y[��RY
+	��]\�]�[�YI�K�^�۝[�H	�	�
+��[�]�����[T��[��
+N��[Y[���][[Y[��RY
+	��]\��	�K�^�۝[�H�[����[Y[���][[Y[��RY
+	��]\�����K�^�۝[�H�[������ۜ���HH��[Y[���][[Y[��RY
+	��[\�]X�I�N��[Y[���][[Y[��RY
+	ۛ�\�[\��K��[K�\�^HH�[\˛[���	ۛۙI��	����K�[��\�SHˋ���[\�K��]�\��J
+K�X\
+�O�����ٛ]]J˜��]
+_O����˘�\��[Y_	��%	�O�����˘�\��[X�\�	��%	�O�����˘�]Y�ܞ_	��%	�O������˜]_O�����ۙω	�˝�[����[T��[��
+_O���ۙϏ������
+K���[�	��N��[�\��\�
+
+NB���[��[ۈ�[�\��\�
+
+H�ۜ��H��[Y[���][[Y[��RY
+	��[\�X�\�	�K��]�۝^
+	̙	�NY�
+�[\��\�
+H��[\��\��\���J
+N��[\��\�H�[�B��ۜ�X\H�N�[\˙�ܑXX�
+�O���ۜ�HH˜��]��X�J
+�N�X\�WHH
+X\�W_
+H
+�˝�[�JN�ۜ�X�[�Hؚ�X���^\�X\
+K��ܝ
+
+NY�
+[X�[˛[��
+H���[��\˜\�[�[[Y[��[��\�SH	�]��[OH�^X[Yێ��[�\��Y[�΍����܎�ؘ��ٛ۝\�^�N�M��l&��(zb��e+�,����O�]����]\��B��[\��\�H�]��\�
+�\N�	ؘ\���]N��X�[ΈX�[˛X\
+O���\X�J	�I�	���JK]\�]Έ�X�[�	�b��e+�hcI�]N�X�[˛X\
+HO�X\�WJK��X��ܛ�[���܎�	��؍X��	��ܙ\���܎�	��؍X����ܙ\��Y���ܙ\��Y]\Έ
+��W_K��[ۜΈ��\�ۜ�]�N��YKXZ[�Z[�\�X��][Ι�[�KY�[�Ξ�Y�[���\�^N��[�__K���[\Έ�N���Y�[�]�\�Ν�YKX��Ξ��[�X�Έ�O�	�	�݋����[T��[��
+HHHHB�JNB���[��[ۈ�]]J\��H�ۜ�H�]�]J\��N�]\��	���]�[YX\�
+_K����[����][۝
+
+J�JK�Y�\�
+�	�	�_K����[����]]J
+JK�Y�\�
+�	�	�_XB����OOOOOOOOOOOH�][���OOOOOOOOOOOB��[��[ۈ�[��][���
+H���[Y[���][[Y[��RY
+	��][���Y�]�\��K��\��\��Y
+	��[��N�B��[��[ۈ���T�][���
+H���[Y[���][[Y[��RY
+	��][���Y�]�\��K��\��\���[[ݙJ	��[��N�B���[��[ۈ��Q�\�Y
+
+H�]�Y�]܋��\��\��ܚ]U^
+�T��Q
+K�[�
+
+HO�[\�
+	��\�Q9m�)!�(�{� I�JK��]�
+
+
+HO���\
+	�*���b�b�z)!�(�{�&���T��Q
+JNB��\�[���[��[ۈ�]�T�][���
+H�ۜ��]�]H��[Y[���][[Y[��RY
+	��][���\]	�K��[YK��[J
+N�ۜ��]��\�H��[Y[���][[Y[��RY
+	��][���Y�\�\��]�	�K��[YK��[J
+NY�
+�]�]
+HUH�]�]Y�
+�]��\�
+H�T��QH�]��\���[�ܘY�K��]][J	���]	�U
+N��[�ܘY�K��]][J	����\��Y	��T��Q
+N��[Y[���][[Y[��RY
+	��][���Y�\�ZY	�K�^�۝[�H�T��Q���T�][���
+N�]�[���]\�	��[��[���	�a�y��:/"yaiK����N]�Z][���Q�\�
+
+N\]P�]Y�ܞS\��
+N[\�
+	�*+yk��m�a,�kf;�#:,����ym�a�y��:/"yaiI�NB���[��[ۈ\��ۛ�X�
+
+HY�
+X�ۙ�\�J	�论*�y.+y����+9�g�*+yk���'��+9�g�*+yk��l!��!zfi;�"�\�9."��:,����y.#yc��olzg���"I�JH�]\����[�ܘY�K��[[ݙR][J	���]	�N��[�ܘY�K��[[ݙR][J	����\��Y	�N��][ۋ��[�Y
+
+NB���ܚ\��؛�O���[�
