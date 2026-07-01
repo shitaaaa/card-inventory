@@ -616,7 +616,7 @@ function loadImageFile(file) {
     };
     img.src = e.target.result;
   };
-  reader.readAsDataURL(file);
+  reader.readAsDataURL/file);
 }
 
 function removeImage() {
@@ -706,12 +706,12 @@ function addCard(mode) {
   updateCategoryLists();
   clearForm(mode);
   if (mode === 'ai') removeImage();
-  alert(`✓ 已新增「${name || number}~」× ${qty} 弭！`);
+  alert(`✓ 已新增「${name || number}#��× ${qty} 張！`);
 }
 
 function clearForm(mode) {
   const p = mode === 'ai' ? 'ai' : 'm';
-  ['number','name','category',"note'].forEach(f => { document.getElementById(`${p}-${f}`).value = ''; });
+  ['number','name','category','note'].forEach(f => { document.getElementById(`${p}-${f}`).value = ''; });
   document.getElementById(`${p}-qty`).value = 1;
   if (mode === 'ai') setAIStatus('hidden', '');
 }
@@ -730,183 +730,171 @@ function renderInventory() {
 
   const grid = document.getElementById('inventory-grid');
   if (filtered.length === 0) {
-    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><p >${inventory.length === 0 ? '庫存污隔，快压新增球員卡！' : '沒有第合梞件的卡鉇'}</p></div>`;
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><p>${inventory.length === 0 ? '庫存空空如也，快去新增球員卡！' : '沒有符合條件的卡片'}</p></div>`;
     return;
   }
 
   grid.innerHTML = filtered.map(c => `
     <div class="inv-card">
-      <div class=�[��X�\�Z[Yȏ��	�˚[XY�H�[Y�ܘ�H��˚[XY�_H�[H��˛�[Y_˛�[X�\�H���	��[��'�����[���B��]���]��\��H�[��X�\�X��H���]��\��H�[��X�\�[�[YH�]OH��˛�[Y_	��%	�H���˛�[Y_	��%	�O�]���]��\��H�[��X�\�[�[H����˛�[X�\�	��%	�I�˛��H�0��	�˛��_X�	��O�]���]��\��H�[��X�\�[Y]H����[��\��H�[��X�\�X�]�]OH��˘�]Y�ܞ_H���˘�]Y�ܞ_O��[����[��\��H�[��X�\�\]H	�˜]OLO����Ή��H�����˜]_O��[����]���]��\��H�[��X�\�XX�[ۜȏ���]ۈ�\��H���\�[�ۘ�X��H��[��[[�[
-	��˚YI�H��e+�a�؝]ۏ���]ۈ�\��H���Y[��\��ۘ�X��H�[]P�\�
-	��˚YI�H��b*�fi؝]ۏ���]����]����]��
-K���[�	��NB���[��[ۈ[]P�\�
-Y
-H�ۜ��H[��[�ܞK��[�
-O��YOOHY
-NY�
-X�H�]\��Y�
-�ۙ�\�J9论*�yb*�fi8�#	�˛�[Y_˛�[X�\�x�#ye��'�
-JH[��[�ܞHH[��[�ܞK��[\�O��YOOHY
-N��Y[T�[��
-N�[�\�[��[�ܞJ
-NB�B���[��[ۈ\]P�]Y�ܞS\��
-H�ۜ��]�Hˋ���]��]
-[��[�ܞK�X\
-�O�˘�]Y�ܞJK��[\����X[�JWN�ۜ��[\�H��[Y[���][[Y[��RY
-	��]Y�[\��NY�
-�[\�H�ۜ��\�H�[\���[YN�[\��[��\�SH	��[ۈ�[YOH����`9�"yb!�hg���[ۏ��
-��]˛X\
-�O��[ۈ�[YOH���H���OOX�\����[X�Y	Ή��O���O��[ۏ�
-K���[�	��NB����][\�	�	��][\�[I�K��ܑXX�
-YO��ۜ�H��[Y[���][[Y[��RY
-Y
-NY�
-
-H�[��\�SH�]˛X\
-�O��[ۈ�[YOH���H��
-K���[�	��NJNB����OOOOOOOOOOOH�[OOOOOOOOOOOB��[��[ۈ�[��[[�[
-Y
-H�ۜ��H[��[�ܞK��[�
-O��YOOHY
-NY�
-X�H�]\���[\��]H���[Y[���][[Y[��RY
-	��[[[�[\�X��K�^�۝[�H	�˛�[Y_	��%	�H��˛�[X�\�	��%	�H0��9n��kf	�˜]_H9o-X��[Y[���][[Y[��RY
-	��[\]I�K��[YHHN��[Y[���][[Y[��RY
-	��[\]I�K�X^H˜]N��[Y[���][[Y[��RY
-	��[\�X�I�K��[YHH	����[Y[���][[Y[��RY
-	��[]�[Y\�^I�K�^�۝[�H	��%	���[Y[���][[Y[��RY
-	��[[[�[	�K��\��\���[[ݙJ	�Y[��NB��[��[ۈ���T�[[�[
+      <div class="inv-card-img">
+        ${c.image ? `<img src="${c.image}" alt="${c.name||c.number}">` : '<span>🃏</span>'}
+      </div>
+      <div class="inv-card-body">
+        <div class="inv-card-name" title="${c.name||'—'}">${c.name||'—'}</div>
+        <div class="inv-card-num">#${c.number||'—'}${c.note ? ` · ${c.note}` : ''}</div>
+        <div class="inv-card-meta">
+          <span class="inv-card-cat" title="${c.category}">${c.category}</span>
+          <span class="inv-card-qty ${c.qty<=1?'low':''}">×${c.qty}</span>
+        </div>
+        <div class="inv-card-actions">
+          <button class="btn-sell" onclick="openSellModal('${c.id}')">售出</button>
+          <button class="btn-danger" onclick="deleteCard('${c.id}')">刪除</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
 
-H���[Y[���][[Y[��RY
-	��[[[�[	�K��\��\��Y
-	�Y[��N��[\��]H�[�B��[��[ۈ\]T�[�[
+function deleteCard(id) {
+  const c = inventory.find(x => x.id === id);
+  if (!c) return;
+  if (confirm(`確認刪除「${c.name||c.number}」嗎？`)) {
+    inventory = inventory.filter(x => x.id !== id);
+    scheduleSync();
+    renderInventory();
+  }
+}
 
-H�ۜ�HH\��R[�
-��[Y[���][[Y[��RY
-	��[\]I�K��[YJ_�ۜ�H\��Q��]
-��[Y[���][[Y[��RY
-	��[\�X�I�K��[YJ_��[Y[���][[Y[��RY
-	��[]�[Y\�^I�K�^�۝[�HJ���		�J�
-K����[T��[��
-_X�	��%	�B��[��[ۈ�ۙ�\�T�[
+function updateCategoryLists() {
+  const cats = [...new Set(inventory.map(c => c.category).filter(Boolean))];
+  const filter = document.getElementById('cat-filter');
+  if (filter) {
+    const cur = filter.value;
+    filter.innerHTML = '<option value="">所有分類</option>' + cats.map(c => `<option value="${c}"${c===cur?' selected':''}>${c}</option>`).join('');
+  }
+  ['cat-list','cat-list-m'].forEach(id => {
+    const dl = document.getElementById(id);
+    if (dl) dl.innerHTML = cats.map(c => `<option value="${c}">`).join('');
+  });
+}
 
-HY�
-\�[\��]
-H�]\���ۜ�]HH\��R[�
-��[Y[���][[Y[��RY
-	��[\]I�K��[YJN�ۜ��X�HH\��Q��]
-��[Y[���][[Y[��RY
-	��[\�X�I�K��[YJ_Y�
-\]H]HJH�[\�
-	�*��/.9aiye+�an:a��� I�N��]\���B�Y�
-]H��[\��]�]JH�[\�
-9n��kf9.#z-��� y� 9i&�	��[\��]�]_H9o-X
-N��]\���B���[\˜\�
-Y�]K����
-K����[��
-K��\�Y��[\��]�Y�\��[YN��[\��]��[YK�\��[X�\���[\��]��[X�\���]Y�ܞN��[\��]��]Y�ܞK]K�X�K�[�]H
-��X�K���]��]�]J
-K��T����[��
-B�JN��[\��]�]HOH]NY�
-�[\��]�]HOOH
-HY�
-�ۙ�\�J9n��kf9�n:f���#9�+�d)�o��b%�(j9���fi8�#	��[\��]��[Y_�[\��]��[X�\�x�#{�'�
-JH[��[�ܞHH[��[�ܞK��[\��O�˚YOOH�[\��]�Y
-NB�B���Y[T�[��
-N���T�[[�[
+// ============ Sell ============
+function openSellModal(id) {
+  const c = inventory.find(x => x.id === id);
+  if (!c) return;
+  sellTarget = c;
+  document.getElementById('sell-modal-sub').textContent = `${c.name||'—'} #${c.number||'—'} · 庫存 ${c.qty} 張`;
+  document.getElementById('sell-qty').value = 1;
+  document.getElementById('sell-qty').max = c.qty;
+  document.getElementById('sell-price').value = '';
+  document.getElementById('sell-total-display').textContent = '—';
+  document.getElementById('sell-modal').classList.remove('hidden');
+}
+function closeSellModal() { document.getElementById('sell-modal').classList.add('hidden'); sellTarget = null; }
+function updateSellTotal() {
+  const q = parseInt(document.getElementById('sell-qty').value)||0;
+  const p = parseFloat(document.getElementById('sell-price').value)||0;
+  document.getElementById('sell-total-display').textContent = q*p > 0 ? `$${(q*p).toLocaleString()}` : '—';
+}
+function confirmSell() {
+  if (!sellTarget) return;
+  const qty = parseInt(document.getElementById('sell-qty').value);
+  const price = parseFloat(document.getElementById('sell-price').value)||0;
+  if (!qty || qty < 1) { alert('請輸入售出數量！'); return; }
+  if (qty > sellTarget.qty) { alert(`庫存不足！最多 ${sellTarget.qty} 張`); return; }
 
-N�[�\�[��[�ܞJ
-N[\�
-8�$�9e+�a�	�]_H9o-{�#:a�zhcH		�]J��X�JK����[T��[��
-_X
-NB����OOOOOOOOOOOH�]�OOOOOOOOOOOB��[��[ۈ�[�\��]�
-H�ۜ��[�]�H�[\˜�YX�J
-�
-HO�����[
-N�ۜ��[��H�[\˜�YX�J
-�
-HO����]K
-N�ۜ��[����H[��[�ܞK��YX�J
-��HO���˜]K
-N��[Y[���][[Y[��RY
-	��]\�]�[�YI�K�^�۝[�H	�	�
-��[�]�����[T��[��
-N��[Y[���][[Y[��RY
-	��]\��	�K�^�۝[�H�[����[Y[���][[Y[��RY
-	��]\�����K�^�۝[�H�[������ۜ���HH��[Y[���][[Y[��RY
-	��[\�]X�I�N��[Y[���][[Y[��RY
-	ۛ�\�[\��K��[K�\�^HH�[\˛[���	ۛۙI��	����K�[��\�SHˋ���[\�K��]�\��J
-K�X\
-�O�����ٛ]]J˜��]
-_O����˘�\��[Y_	��%	�O�����˘�\��[X�\�	��%	�O�����˘�]Y�ܞ_	��%	�O������˜]_O�����ۙω	�˝�[����[T��[��
-_O���ۙϏ������
-K���[�	��N��[�\��\�
+  sales.push({
+    id: Date.now().toString(),
+    cardId: sellTarget.id, cardName: sellTarget.name, cardNumber: sellTarget.number,
+    category: sellTarget.category, qty, price, total: qty * price,
+    soldAt: new Date().toISOString()
+  });
 
-NB���[��[ۈ�[�\��\�
+  sellTarget.qty -= qty;
+  if (sellTarget.qty === 0) {
+    if (confirm(`庫存歸零，是否從列表移除「${sellTarget.name||sellTarget.number}」？`)) {
+      inventory = inventory.filter(c => c.id !== sellTarget.id);
+    }
+  }
+  scheduleSync();
+  closeSellModal();
+  renderInventory();
+  alert(`✓ 售出 ${qty} 張，金額 $${(qty*price).toLocaleString()}`);
+}
 
-H�ۜ��H��[Y[���][[Y[��RY
-	��[\�X�\�	�K��]�۝^
-	̙	�NY�
-�[\��\�
-H��[\��\��\���J
-N��[\��\�H�[�B��ۜ�X\H�N�[\˙�ܑXX�
-�O���ۜ�HH˜��]��X�J
-�N�X\�WHH
-X\�W_
-H
-�˝�[�JN�ۜ�X�[�Hؚ�X���^\�X\
-K��ܝ
+// ============ Stats ============
+function renderStats() {
+  const totalRev = sales.reduce((s,x) => s+x.total, 0);
+  const totalSold = sales.reduce((s,x) => s+x.qty, 0);
+  const totalStock = inventory.reduce((s,c) => s+c.qty, 0);
+  document.getElementById('stat-revenue').textContent = '$' + totalRev.toLocaleString();
+  document.getElementById('stat-sold').textContent = totalSold;
+  document.getElementById('stat-stock').textContent = totalStock;
 
-NY�
-[X�[˛[��
-H���[��\˜\�[�[[Y[��[��\�SH	�]��[OH�^X[Yێ��[�\��Y[�΍����܎�ؘ��ٛ۝\�^�N�M��l&��(zb��e+�,����O�]����]\��B��[\��\�H�]��\�
-�\N�	ؘ\���]N��X�[ΈX�[˛X\
-O���\X�J	�I�	���JK]\�]Έ�X�[�	�b��e+�hcI�]N�X�[˛X\
-HO�X\�WJK��X��ܛ�[���܎�	��؍X��	��ܙ\���܎�	��؍X����ܙ\��Y���ܙ\��Y]\Έ
-��W_K��[ۜΈ��\�ۜ�]�N��YKXZ[�Z[�\�X��][Ι�[�KY�[�Ξ�Y�[���\�^N��[�__K���[\Έ�N���Y�[�]�\�Ν�YKX��Ξ��[�X�Έ�O�	�	�݋����[T��[��
-HHHHB�JNB���[��[ۈ�]]J\��H�ۜ�H�]�]J\��N�]\��	���]�[YX\�
-_K����[����][۝
+  const tbody = document.getElementById('sales-table');
+  document.getElementById('no-sales').style.display = sales.length ? 'none' : '';
+  tbody.innerHTML = [...sales].reverse().map(s => `<tr>
+    <td>${fmtDate(s.soldAt)}</td><td>${s.cardName||'—'}</td><td>#${s.cardNumber||'—'}</td>
+    <td>${s.category||'—'}</td><td>×${s.qty}</td><td><strong>$${s.total.toLocaleString()}</strong></td>
+  </tr>`).join('');
 
-J�JK�Y�\�
-�	�	�_K����[����]]J
-JK�Y�\�
-�	�	�_XB����OOOOOOOOOOOH�][���OOOOOOOOOOOB��[��[ۈ�[��][���
-H���[Y[���][[Y[��RY
-	��][���Y�]�\��K��\��\��Y
-	��[��N�B��[��[ۈ���T�][���
-H���[Y[���][[Y[��RY
-	��][���Y�]�\��K��\��\���[[ݙJ	��[��N�B���[��[ۈ��Q�\�Y
+  renderChart();
+}
 
-H�]�Y�]܋��\��\��ܚ]U^
-�T��Q
-K�[�
+function renderChart() {
+  const ctx = document.getElementById('sales-chart').getContext('2d');
+  if (salesChart) { salesChart.destroy(); salesChart = null; }
+  const map = {};
+  sales.forEach(s => { const m = s.soldAt.slice(0,7); map[m] = (map[m]||0) + s.total; });
+  const labels = Object.keys(map).sort();
+  if (!labels.length) {
+    ctx.canvas.parentElement.innerHTML = '<div style="text-align:center;padding:60px;color:#bbb;font-size:14px">尚無銷售資料</div>';
+    return;
+  }
+  salesChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: labels.map(l => l.replace('-','/')), datasets: [{
+      label: '銷售額', data: labels.map(m => map[m]),
+      backgroundColor: '#3b5bdb88', borderColor: '#3b5bdb', borderWidth: 2, borderRadius: 6
+    }]},
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales: { y: { beginAtZero:true, ticks:{ callback: v => '$'+v.toLocaleString() } } } }
+  });
+}
 
-HO�[\�
-	��\�Q9m�)!�(�{� I�JK��]�
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
 
+// ============ Settings ============
+function openSettings() { document.getElementById('settings-drawer').classList.add('open'); }
+function closeSettings() { document.getElementById('settings-drawer').classList.remove('open'); }
 
-HO���\
-	�*���b�b�z)!�(�{�&���T��Q
-JNB��\�[���[��[ۈ�]�T�][���
-H�ۜ��]�]H��[Y[���][[Y[��RY
-	��][���\]	�K��[YK��[J
-N�ۜ��]��\�H��[Y[���][[Y[��RY
-	��][���Y�\�\��]�	�K��[YK��[J
-NY�
-�]�]
-HUH�]�]Y�
-�]��\�
-H�T��QH�]��\���[�ܘY�K��]][J	���]	�U
-N��[�ܘY�K��]][J	����\��Y	��T��Q
-N��[Y[���][[Y[��RY
-	��][���Y�\�ZY	�K�^�۝[�H�T��Q���T�][���
-N�]�[���]\�	��[��[���	�a�y��:/"yaiK����N]�Z][���Q�\�
+function copyGistId() {
+  navigator.clipboard.writeText(GIST_ID).then(() => alert('Gist ID 已複製！')).catch(() => prompt('請手動複製：', GIST_ID));
+}
 
-N\]P�]Y�ܞS\��
-N[\�
-	�*+yk��m�a,�kf;�#:,����ym�a�y��:/"yaiI�NB���[��[ۈ\��ۛ�X�
+as ync function saveSettings() {
+  const newPat = document.getElementById('settings-pat').value.trim();
+  const newGist = document.getElementById('settings-gist-switch').value.trim();
+  if (newPat) PAT= newPat;
+  if (newGist) GIST_ID = newGist;
+  localStorage.setItem('gh_pat', PAT);
+  localStorage.setItem('gh_gist_id', GIST_ID);
+  document.getElementById('settings-gist-id').textContent = GIST_ID;
+  closeSettings();
+  setSyncStatus('syncing', '重新載入...');
+  await pullFromGist();
+  updateCategoryLists();
+  alert('設定已儲存，資料已重新載入');
+}
 
-HY�
-X�ۙ�\�J	�论*�y.+y����+9�g�*+yk���'��+9�g�*+yk��l!��!zfi;�"�\�9."��:,����y.#yc��olzg���"I�JH�]\����[�ܘY�K��[[ݙR][J	���]	�N��[�ܘY�K��[[ݙR][J	����\��Y	�N��][ۋ��[�Y
-
-NB���ܚ\��؛�O���[�
+function disconnect() {
+  if (!confirm('確認中斷連線？本機設定將清除（Gist 上的資料不受影響）')) return;
+  localStorage.removeItem('gh_pat');
+  localStorage.removeItem('gh_gist_id');
+  location.reload();
+}
+</script>
+</body>
+</html>
