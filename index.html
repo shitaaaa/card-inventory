@@ -235,7 +235,7 @@ tr:last-child td{border-bottom:none;}
       <!-- AI 模式 -->
       <div id="ai-mode">
         <div class="card">
-          <div class="card-title">📷 $��傳球員卡圖片</div>
+          <div class="card-title">📷 上傳球員卡圖片</div>
           <div id="upload-zone" class="upload-zone" onclick="document.getElementById('upload-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
             <div class="uicon">📸</div>
             <p>點擊或拖曳圖片至此</p>
@@ -616,7 +616,7 @@ function loadImageFile(file) {
     };
     img.src = e.target.result;
   };
-  reader.readAsDataURL/file);
+  reader.readAsDataURL(file);
 }
 
 function removeImage() {
@@ -706,7 +706,7 @@ function addCard(mode) {
   updateCategoryLists();
   clearForm(mode);
   if (mode === 'ai') removeImage();
-  alert(`✓ 已新增「${name || number}#��× ${qty} 張！`);
+  alert(`✓ 已新增「${name || number}」× ${qty} 張！`);
 }
 
 function clearForm(mode) {
@@ -877,7 +877,7 @@ function copyGistId() {
 async function saveSettings() {
   const newPat = document.getElementById('settings-pat').value.trim();
   const newGist = document.getElementById('settings-gist-switch').value.trim();
-  if (newPat) PAT= newPat;
+  if (newPat) PAT = newPat;
   if (newGist) GIST_ID = newGist;
   localStorage.setItem('gh_pat', PAT);
   localStorage.setItem('gh_gist_id', GIST_ID);
