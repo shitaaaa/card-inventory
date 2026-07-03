@@ -156,6 +156,15 @@ tr:last-child td{border-bottom:none;}
 .sell-total{background:#f8f9ff;border-radius:8px;padding:12px;font-size:14px;text-align:center;margin-top:12px;}
 .sell-total span{font-weight:700;font-size:18px;color:#2f9e44;}
 
+/* OpenAI Key Modal */
+#openai-key-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
+#openai-key-modal.open{display:flex;}
+.openai-key-box{background:white;border-radius:14px;padding:28px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.openai-key-box h2{font-size:17px;font-weight:700;margin-bottom:6px;}
+.openai-key-box p{font-size:13px;color:#666;margin-bottom:18px;line-height:1.6;}
+.openai-key-box .key-hint{font-size:12px;color:#999;margin-top:6px;line-height:1.5;}
+.openai-key-box .key-hint a{color:#7048e8;text-decoration:none;}
+
 /* Settings drawer */
 #settings-drawer{position:fixed;inset:0;z-index:150;display:none;}
 #settings-drawer.open{display:flex;}
@@ -167,20 +176,7 @@ tr:last-child td{border-bottom:none;}
 .gist-id-display{background:#f4f5f7;border-radius:8px;padding:10px 12px;font-size:12px;font-family:monospace;word-break:break-all;color:#444;margin-bottom:12px;}
 .danger-zone{border:1px solid #ffc9c9;border-radius:10px;padding:16px;margin-top:24px;}
 .danger-zone h3{color:#c92a2a;font-size:13px;font-weight:700;margin-bottom:12px;}
-
-/* OpenAI Key Modal */
-#openai-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
-#openai-modal.show{display:flex;}
-.openai-box{background:white;border-radius:14px;padding:28px;width:100%;max-width:420px;}
-.openai-box h3{font-size:16px;font-weight:700;margin-bottom:8px;}
-.openai-box p{font-size:13px;color:#666;margin-bottom:16px;line-height:1.6;}
-.openai-box input{width:100%;padding:11px 14px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:14px;outline:none;font-family:monospace;margin-bottom:8px;}
-.openai-box input:focus{border-color:#7048e8;}
-.openai-box .hint{font-size:12px;color:#aaa;margin-bottom:16px;}
-.openai-box .actions{display:flex;gap:10px;}
-.openai-box .actions button{flex:1;padding:11px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;}
-.openai-box .actions .ok{background:#7048e8;color:white;}
-.openai-box .actions .cancel{background:#f4f5f7;color:#444;}
+.settings-section-title{font-size:12px;font-weight:700;color:#7048e8;text-transform:uppercase;letter-spacing:.5px;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid #ede9fe;}
 
 @media(max-width:600px){
   .form-row{grid-template-columns:1fr;}
@@ -218,6 +214,27 @@ tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
+<!-- ===== OpenAI Key Modal ===== -->
+<div id="openai-key-modal">
+  <div class="openai-key-box">
+    <h2>🤖 設定 OpenAI API Key</h2>
+    <p>AI 圖片辨識需要您的 OpenAI API Key。Key 會儲存在您的 GitHub Gist，與庫存資料同步，<strong>任何裝置連上同一 Gist 即自動取得，只需設定一次。</strong></p>
+    <div class="form-group">
+      <label>OpenAI API Key</label>
+      <input type="password" id="openai-key-input" style="padding:10px 12px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:14px;outline:none;width:100%;font-family:monospace" placeholder="sk-xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+      <div class="key-hint">
+        前往 <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a> 取得 Key。<br>
+        使用 gpt-4o 模型，每次辨識約 $0.001～$0.003 USD。
+      </div>
+    </div>
+    <div id="openai-key-error" style="background:#fce4e4;color:#721c24;padding:9px 12px;border-radius:8px;font-size:13px;margin-top:10px;display:none;"></div>
+    <div style="display:flex;gap:10px;margin-top:18px;">
+      <button class="btn btn-secondary" style="flex:1;padding:12px" onclick="closeOpenAIKeyModal()">取消</button>
+      <button class="btn btn-primary" style="flex:1;padding:12px;background:#7048e8" onclick="saveOpenAIKey()">儲存並辨識</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== Main App ===== -->
 <div id="app" style="display:none">
 
@@ -249,7 +266,7 @@ tr:last-child td{border-bottom:none;}
       <!-- AI 模式 -->
       <div id="ai-mode">
         <div class="card">
-          <div class="card-title">📷 上傳球員卡圖片</div>
+          <div class="card-title">📷 ��傳球員卡圖片</div>
           <div id="upload-zone" class="upload-zone" onclick="document.getElementById('upload-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
             <div class="uicon">📸</div>
             <p>點擊或拖曳圖片至此</p>
@@ -400,30 +417,23 @@ tr:last-child td{border-bottom:none;}
       <label>切換 Gist ID（接回舊資料）</label>
       <input type="text" id="settings-gist-switch" style="padding:10px 12px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:14px;outline:none;width:100%" placeholder="貼上 Gist ID">
     </div>
-    <div class="form-group" style="margin-bottom:14px">
-      <label>更新 OpenAI API Key</label>
-      <input type="password" id="settings-openai-key" style="padding:10px 12px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:14px;outline:none;width:100%;font-family:monospace" placeholder="sk-...">
-      <div style="font-size:12px;color:#aaa;margin-top:4px;">儲存後同步至 Gist，所有瀏覽器共用</div>
-    </div>
     <button class="btn btn-primary" style="width:100%;padding:12px" onclick="saveSettings()">儲存設定並重新連線</button>
+
+    <!-- OpenAI Section -->
+    <div class="settings-section-title">🤖 AI 辨識設定</div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label>OpenAI API Key</label>
+      <input type="password" id="settings-openai-key" style="padding:10px 12px;border:1.5px solid #e0e4ea;border-radius:8px;font-size:14px;outline:none;width:100%;font-family:monospace" placeholder="sk-xxxxxxxxxxxxxxxxxxxx">
+    </div>
+    <div style="font-size:12px;color:#999;margin-bottom:10px;line-height:1.5;">
+      Key 儲存於 GitHub Gist，跨裝置自動同步，只需設定一次。<br>
+      <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#7048e8;text-decoration:none;">取得 API Key →</a>
+    </div>
+    <button class="btn" style="background:#7048e8;color:white;width:100%;padding:10px;font-size:14px" onclick="saveOpenAIKeyFromSettings()">儲存 API Key</button>
 
     <div class="danger-zone" style="margin-top:24px">
       <h3>⚠️ 危險操作</h3>
       <button class="btn btn-danger" style="width:100%;padding:10px;font-size:14px" onclick="disconnect()">中斷連線並清除本機設定</button>
-    </div>
-  </div>
-</div>
-
-<!-- OpenAI Key Modal -->
-<div id="openai-modal">
-  <div class="openai-box">
-    <h3>✨ 設定 AI 辨識功能</h3>
-    <p>首次使用 AI 辨識需要輸入 OpenAI API Key。輸入後會同步到你的 Gist，之後所有瀏覽器自動共用，不需再次輸入。</p>
-    <input type="password" id="openai-key-input" placeholder="sk-proj-..." autocomplete="off">
-    <div class="hint">前往 <a href="https://platform.openai.com/api-keys" target="_blank" style="color:#7048e8">platform.openai.com/api-keys</a> 取得 Key</div>
-    <div class="actions">
-      <button class="cancel" onclick="closeOpenAIModal()">取消</button>
-      <button class="ok" onclick="saveOpenAIKey()">儲存並辨識</button>
     </div>
   </div>
 </div>
@@ -433,13 +443,14 @@ tr:last-child td{border-bottom:none;}
 const GIST_FILENAME = 'card-inventory-data.json';
 let PAT = '';
 let GIST_ID = '';
-let OPENAI_KEY = '';
 let inventory = [];
 let sales = [];
 let sellTarget = null;
 let salesChart = null;
 let syncTimer = null;
-let pendingAIAfterKey = false;
+let pendingSync = false;
+let openaiKey = ''; // Loaded from Gist, synced across devices
+let pendingAICallback = null; // Called after OpenAI key is saved
 
 // ============ Setup / Connect ============
 async function connectGitHub() {
@@ -455,10 +466,12 @@ async function connectGitHub() {
   errEl.style.display = 'none';
 
   try {
+    // Verify token
     const userRes = await ghFetch('https://api.github.com/user', pat);
     if (!userRes.ok) { showSetupError('Token 無效，請確認並重試'); return; }
 
     if (gistId) {
+      // Try to load existing gist
       const gistRes = await ghFetch(`https://api.github.com/gists/${gistId}`, pat);
       if (!gistRes.ok) { showSetupError('找不到指定的 Gist，請確認 Gist ID'); return; }
       const gist = await gistRes.json();
@@ -467,14 +480,15 @@ async function connectGitHub() {
         const data = JSON.parse(file.content);
         inventory = data.inventory || [];
         sales = data.sales || [];
-        OPENAI_KEY = data.openai_api_key || '';
+        if (data.openai_api_key) openaiKey = data.openai_api_key;
       }
       GIST_ID = gistId;
     } else {
+      // Create new gist
       const createRes = await ghFetch('https://api.github.com/gists', pat, 'POST', {
         description: '球員卡庫存系統資料',
         public: false,
-        files: { [GIST_FILENAME]: { content: JSON.stringify({ inventory: [], sales: [], openai_api_key: '' }, null, 2) } }
+        files: { [GIST_FILENAME]: { content: JSON.stringify({ inventory: [], sales: [] }, null, 2) } }
       });
       if (!createRes.ok) { showSetupError('建立 Gist 失敗，請確認 Token 有 gist 權限'); return; }
       const newGist = await createRes.json();
@@ -516,8 +530,15 @@ function launchApp() {
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('settings-gist-id').textContent = GIST_ID;
+  if (openaiKey) {
+    document.getElementById('settings-openai-key').placeholder = '已設定（輸入新 Key 覆蓋）';
+  }
   updateCategoryLists();
   setSyncStatus('synced', '已同步');
+  // If Gist has no OpenAI key yet, prompt user once
+  if (!openaiKey) {
+    setTimeout(() => openOpenAIKeyModal(null), 600);
+  }
 }
 
 // ============ Auto-load on page open ============
@@ -532,7 +553,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('settings-gist-id').textContent = GIST_ID;
     setSyncStatus('syncing', '同步中...');
     await pullFromGist();
+    if (openaiKey) {
+      document.getElementById('settings-openai-key').placeholder = '已設定（輸入新 Key 覆蓋）';
+    }
     updateCategoryLists();
+    // If Gist has no OpenAI key yet, prompt user once
+    if (!openaiKey) {
+      setTimeout(() => openOpenAIKeyModal(null), 600);
+    }
   }
 });
 
@@ -541,8 +569,10 @@ async function pushToGist() {
   if (!PAT || !GIST_ID) return;
   setSyncStatus('syncing', '同步中...');
   try {
+    const gistData = { inventory, sales };
+    if (openaiKey) gistData.openai_api_key = openaiKey;
     const res = await ghFetch(`https://api.github.com/gists/${GIST_ID}`, PAT, 'PATCH', {
-      files: { [GIST_FILENAME]: { content: JSON.stringify({ inventory, sales, openai_api_key: OPENAI_KEY }, null, 2) } }
+      files: { [GIST_FILENAME]: { content: JSON.stringify(gistData, null, 2) } }
     });
     if (res.ok) setSyncStatus('synced', '已同步 ' + timeNow());
     else setSyncStatus('error', '同步失敗');
@@ -563,7 +593,7 @@ async function pullFromGist() {
         const data = JSON.parse(file.content);
         inventory = data.inventory || [];
         sales = data.sales || [];
-        OPENAI_KEY = data.openai_api_key || '';
+        if (data.openai_api_key) openaiKey = data.openai_api_key;
       }
       setSyncStatus('synced', '已同步 ' + timeNow());
     } else {
@@ -628,6 +658,7 @@ let currentImage = null;
 function loadImageFile(file) {
   const reader = new FileReader();
   reader.onload = (e) => {
+    // Compress image using canvas
     const img = new Image();
     img.onload = () => {
       const MAX = 500;
@@ -661,31 +692,50 @@ function removeImage() {
 }
 
 // ============ OpenAI Key Modal ============
-function openOpenAIModal() {
+function openOpenAIKeyModal(callback) {
+  pendingAICallback = callback || null;
   document.getElementById('openai-key-input').value = '';
-  document.getElementById('openai-modal').classList.add('show');
+  document.getElementById('openai-key-error').style.display = 'none';
+  document.getElementById('openai-key-modal').classList.add('open');
+  setTimeout(() => document.getElementById('openai-key-input').focus(), 100);
 }
-function closeOpenAIModal() {
-  document.getElementById('openai-modal').classList.remove('show');
-  pendingAIAfterKey = false;
+
+function closeOpenAIKeyModal() {
+  document.getElementById('openai-key-modal').classList.remove('open');
+  pendingAICallback = null;
 }
-async function saveOpenAIKey() {
+
+function saveOpenAIKey() {
   const key = document.getElementById('openai-key-input').value.trim();
+  const errEl = document.getElementById('openai-key-error');
   if (!key || !key.startsWith('sk-')) {
-    alert('請輸入有效的 OpenAI API Key（以 sk- 開頭）');
+    errEl.textContent = '請輸入有效的 OpenAI API Key（以 sk- 開頭）';
+    errEl.style.display = 'block';
     return;
   }
-  OPENAI_KEY = key;
-  document.getElementById('openai-modal').classList.remove('show');
-  // Save to Gist immediately
-  await pushToGist();
-  if (pendingAIAfterKey) {
-    pendingAIAfterKey = false;
-    runAI();
+  openaiKey = key;
+  pushToGist(); // Save key to Gist for cross-device sync
+  document.getElementById('settings-openai-key').placeholder = '已設定（輸入新 Key 覆蓋）';
+  closeOpenAIKeyModal();
+  if (pendingAICallback) {
+    const cb = pendingAICallback;
+    pendingAICallback = null;
+    cb(key);
   }
 }
 
-// ============ AI (OpenAI Vision) ============
+function saveOpenAIKeyFromSettings() {
+  const key = document.getElementById('settings-openai-key').value.trim();
+  if (!key) { alert('請輸入 API Key'); return; }
+  if (!key.startsWith('sk-')) { alert('OpenAI API Key 應以 sk- 開頭'); return; }
+  openaiKey = key;
+  pushToGist(); // Save key to Gist for cross-device sync
+  document.getElementById('settings-openai-key').value = '';
+  document.getElementById('settings-openai-key').placeholder = '已設定（輸入新 Key 覆蓋）';
+  alert('✓ OpenAI API Key 已儲存至 Gist，跨裝置自動同步');
+}
+
+// ============ AI (OpenAI Vision API) ============
 function setAIStatus(type, msg) {
   const el = document.getElementById('ai-status');
   el.className = 'ai-status ' + type;
@@ -696,54 +746,55 @@ function setAIStatus(type, msg) {
 async function runAI() {
   if (!currentImage) return;
 
-  // If no OpenAI key, prompt for it first
-  if (!OPENAI_KEY) {
-    pendingAIAfterKey = true;
-    openOpenAIModal();
+  if (!openaiKey) {
+    openOpenAIKeyModal((key) => { runAIWithKey(key); });
     return;
   }
+  runAIWithKey(openaiKey);
+}
 
+async function runAIWithKey(openaiKey) {
   const btn = document.getElementById('ai-btn');
   btn.disabled = true;
   setAIStatus('loading', 'AI 辨識中，請稍候...');
 
   try {
-    const base64Data = currentImage.split(',')[1];
-    const mimeType = currentImage.split(';')[0].split(':')[1];
-
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_KEY}`,
+        'Authorization': `Bearer ${openaiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: 'gpt-4o',
-        max_tokens: 200,
         messages: [{
           role: 'user',
           content: [
             {
-              type: 'text',
-              text: '你是球員卡辨識專家。請分析這張球員卡圖片，找出：1. 球員號碼（jersey number）2. 球員姓名（完整姓名）。只回傳 JSON，不加任何說明：{"playerNumber": "號碼或null", "playerName": "姓名或null"}'
+              type: 'image_url',
+              image_url: { url: currentImage, detail: 'low' }
             },
             {
-              type: 'image_url',
-              image_url: { url: `data:${mimeType};base64,${base64Data}` }
+              type: 'text',
+              text: '你是球員卡辨識專家。請分析這張球員卡圖片，找出：\n1. 球員號碼（jersey number）\n2. 球員姓名（完整姓名）\n\n只回傳 JSON，不加任何說明：\n{"playerNumber": "號碼或null", "playerName": "姓名或null"}'
             }
           ]
-        }]
+        }],
+        max_tokens: 150
       })
     });
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
       if (response.status === 401) {
-        OPENAI_KEY = '';
-        scheduleSync();
-        setAIStatus('error', '⚠ API Key 無效，請在設定中重新輸入');
+        openaiKey = '';
+        pushToGist(); // Remove invalid key from Gist
+        document.getElementById('settings-openai-key').placeholder = 'sk-xxxxxxxxxxxxxxxxxxxx';
+        setAIStatus('error', '⚠ API Key 無效，已清除。請至設定重新輸入。');
+      } else if (response.status === 429) {
+        setAIStatus('error', '⚠ API ⫋求過多，請稍後再試');
       } else {
-        setAIStatus('error', '⚠ API 錯誤：' + (err.error?.message || response.status));
+        setAIStatus('error', `⚠ API 錯誤（${response.status}）：${err.error?.message || '請稍後再試'}`);
       }
       return;
     }
@@ -758,13 +809,12 @@ async function runAI() {
       if (parsed.playerNumber && parsed.playerNumber !== 'null') document.getElementById('ai-number').value = parsed.playerNumber;
       if (parsed.playerName && parsed.playerName !== 'null') document.getElementById('ai-name').value = parsed.playerName;
       const ok = [parsed.playerNumber, parsed.playerName].filter(v => v && v !== 'null');
-      setAIStatus(ok.length > 0 ? 'success' : 'error',
-        ok.length > 0 ? `✓ 辨識：${ok.join('、')}，請確認資訊` : '⚠ 無法辨識，請手動輸入');
+      setAIStatus(ok.length > 0 ? 'success' : 'error', ok.length > 0 ? `✓ 辨識完成：${ok.join('、')}，請確認後加入庫存` : '⚠ 無法辨識，請手動輸入');
     } else {
       setAIStatus('error', '⚠ 辨識失敗，請手動輸入');
     }
   } catch (e) {
-    setAIStatus('error', '⚠ 網路錯誤：' + e.message);
+    setAIStatus('error', '⚠ 網路錯誤，請檢查網路連線後重試');
   } finally {
     btn.disabled = false;
   }
@@ -784,7 +834,7 @@ function addCard(mode) {
 
   const existing = inventory.find(c => c.number === number && c.name === name && c.category === category);
   if (existing) {
-    if (confirm(`已有「${name || number}」，是否加 ${qty} 張到現有庫存？`)) {
+    if (confirm(`已有「${name || number}#��，是否加 ${qty} 張到現有庫存？`)) {
       existing.qty += qty;
       scheduleSync();
       alert(`已增加至 ${existing.qty} 張`);
@@ -827,7 +877,7 @@ function renderInventory() {
 
   const grid = document.getElementById('inventory-grid');
   if (filtered.length === 0) {
-    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><p>${inventory.length === 0 ? '庫存空空如也，快去新增球員卡！' : '沒有符合條件的卡片'}|/p></div>`;
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><p>${inventory.length === 0 ? '庫存空空如也，快去新增球員卡！' : '沒有符合條件的卡片'}</p></div>`;
     return;
   }
 
@@ -974,23 +1024,21 @@ function copyGistId() {
 async function saveSettings() {
   const newPat = document.getElementById('settings-pat').value.trim();
   const newGist = document.getElementById('settings-gist-switch').value.trim();
-  const newOpenAI = document.getElementById('settings-openai-key').value.trim();
-  if (newPat) PAT= newPat;
+  if (newPat) PAT = newPat;
   if (newGist) GIST_ID = newGist;
-  if (newOpenAI) OPENAI_KEY = newOpenAI;
   localStorage.setItem('gh_pat', PAT);
   localStorage.setItem('gh_gist_id', GIST_ID);
   document.getElementById('settings-gist-id').textContent = GIST_ID;
   closeSettings();
   setSyncStatus('syncing', '重新載入...');
-  await pushToGist();
   await pullFromGist();
   updateCategoryLists();
-  alert('設開已儲存，一致已重新載入');
+  alert('設定已儲存，資料已重新載入');
 }
 
 function disconnect() {
-  if (!confirm('確認断連線？本機設定將温除（Gist 上的資料不受影響）')) return;
+  if (!confirm('確認中斷連線？本機設定將清除（Gist 上的資料不受影響）')) return;
+  openaiKey = '';
   localStorage.removeItem('gh_pat');
   localStorage.removeItem('gh_gist_id');
   location.reload();
@@ -998,4 +1046,3 @@ function disconnect() {
 </script>
 </body>
 </html>
-ml>
